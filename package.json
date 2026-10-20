@@ -8,5 +8,14 @@
     "node": ">=22",
     "pnpm": ">=10"
   },
-  "scripts": {}
+  "scripts": {
+  "build": "turbo run build",
+  "dev": "turbo run dev",
+  "lint": "turbo run lint",
+  "test": "turbo run test",
+  "typecheck": "turbo run typecheck"
+},
+  "devDependencies": {
+    "turbo": "^2.11.9"
+  }
 }
