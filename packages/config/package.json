@@ -1,0 +1,18 @@
+{
+  "name": "@ampara/config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./tsconfig/base": "./typescript/base.json",
+    "./tsconfig/react": "./typescript/react.json",
+    "./tsconfig/node": "./typescript/node.json",
+    "./prettier": "./prettier/index.js",
+    "./eslint": "./eslint/index.js"
+  },
+  "files": [
+    "typescript",
+    "eslint",
+    "prettier"
+  ]
+}
