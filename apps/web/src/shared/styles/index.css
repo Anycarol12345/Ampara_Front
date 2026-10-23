@@ -1,0 +1,153 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import '@fontsource-variable/inter';
+@import '@fontsource-variable/newsreader';
+@import '@fontsource-variable/newsreader/wght-italic.css';
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Tokens de cor em HSL "H S% L%" (sem hsl()), no padrão do protótipo.
+ * A funerária sobrescreve --primary, --accent e derivados em runtime
+ * (ver app/providers/TenantProvider). Não use cores fixas nos componentes.
+ */
+:root {
+  --background: 45 45% 97%;
+  --foreground: 213 30% 22%;
+  --card: 48 55% 99%;
+  --card-foreground: 213 30% 22%;
+  --popover: 48 55% 99%;
+  --popover-foreground: 213 30% 22%;
+  --primary: 213 63% 22%;
+  --primary-foreground: 45 45% 98%;
+  --secondary: 213 55% 93%;
+  --secondary-foreground: 213 63% 22%;
+  --muted: 45 25% 93%;
+  --muted-foreground: 213 18% 47%;
+  --accent: 43 64% 69%;
+  --accent-foreground: 213 63% 18%;
+  --destructive: 0 62% 45%;
+  --destructive-foreground: 45 45% 98%;
+  --success: 152 45% 32%;
+  --success-foreground: 45 45% 98%;
+  --border: 45 20% 88%;
+  --input: 45 20% 88%;
+  --ring: 213 63% 22%;
+
+  --radius: 0.85rem;
+
+  --ampara-shadow-soft: 0 20px 50px -34px hsl(213 63% 22% / 0.45);
+  --ampara-shadow-card: 0 34px 70px -44px hsl(213 63% 22% / 0.55);
+  --ampara-shadow-float: 0 18px 38px -14px hsl(213 63% 22% / 0.42);
+  --ampara-shadow-field: 0 1px 2px hsl(213 63% 22% / 0.05);
+}
+
+.dark {
+  --background: 213 45% 9%;
+  --foreground: 45 30% 94%;
+  --card: 213 40% 12%;
+  --card-foreground: 45 30% 94%;
+  --popover: 213 40% 12%;
+  --popover-foreground: 45 30% 94%;
+  --primary: 213 70% 72%;
+  --primary-foreground: 213 64% 12%;
+  --secondary: 213 35% 18%;
+  --secondary-foreground: 45 30% 94%;
+  --muted: 213 30% 16%;
+  --muted-foreground: 213 18% 68%;
+  --accent: 43 60% 62%;
+  --accent-foreground: 213 64% 12%;
+  --destructive: 0 62% 55%;
+  --destructive-foreground: 45 30% 98%;
+  --success: 152 45% 48%;
+  --success-foreground: 213 64% 12%;
+  --border: 213 25% 22%;
+  --input: 213 25% 22%;
+  --ring: 213 70% 72%;
+
+  --ampara-shadow-soft: 0 20px 50px -34px hsl(0 0% 0% / 0.7);
+  --ampara-shadow-card: 0 34px 70px -44px hsl(0 0% 0% / 0.8);
+  --ampara-shadow-float: 0 18px 38px -14px hsl(0 0% 0% / 0.7);
+  --ampara-shadow-field: 0 1px 2px hsl(0 0% 0% / 0.3);
+}
+
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-success: hsl(var(--success));
+  --color-success-foreground: hsl(var(--success-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-serif: 'Newsreader Variable', ui-serif, Georgia, serif;
+
+  --shadow-soft: var(--ampara-shadow-soft);
+  --shadow-card: var(--ampara-shadow-card);
+  --shadow-float: var(--ampara-shadow-float);
+  --shadow-field: var(--ampara-shadow-field);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+
+  ::selection {
+    background-color: hsl(var(--primary) / 0.14);
+  }
+
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+}
+
+/* Tipografia do protótipo */
+@utility eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.26em;
+  color: hsl(var(--muted-foreground));
+}
+
+@utility section-title {
+  font-family: var(--font-serif);
+  font-size: clamp(1.95rem, 3.6vw, 2.9rem);
+  font-weight: 400;
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+  color: hsl(var(--primary));
+}

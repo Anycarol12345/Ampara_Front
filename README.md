@@ -12,7 +12,7 @@ Ampara_Front/
 ├── packages/
 │   ├── config/     tsconfig, ESLint e Prettier compartilhados
 │   ├── ui/         (a criar) componentes shadcn/ui e tema compartilhados
-│   ├── api-client/ (a criar) client gerado pelo Orval a partir do OpenAPI do backend
+│   ├── api-client/ client gerado pelo Orval a partir do openapi.json do backend
 │   └── e2e/        (a criar) testes Playwright
 ├── pnpm-workspace.yaml
 └── turbo.json
@@ -57,13 +57,28 @@ pnpm --filter @ampara/landing dev
 
 | App       | Arquivo local | Variáveis                                      |
 | --------- | ------------- | ---------------------------------------------- |
-| `web`     | `.env`        | `VITE_API_URL`                                 |
+| `web`     | `.env`        | `VITE_API_URL`, `VITE_TENANT` (slug em dev)    |
 | `landing` | `.env.local`  | `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_APP_URL`   |
 
 - Os arquivos `.env.example` são versionados; os `.env` reais não.
 - Tudo que começa com `VITE_` ou `NEXT_PUBLIC_` vai para o navegador. **Nunca coloque segredos aí.**
 - Leia as variáveis sempre pelo módulo `env.ts` de cada app (`shared/lib/env.ts` no web, `lib/env.ts` na landing), nunca direto de `import.meta.env` ou `process.env`.
 - O Vite só lê o `.env` ao iniciar: reinicie o dev server após alterá-lo.
+
+## Integração com o backend
+
+O backend ([Ampara, branch `developer`](https://github.com/ArturRibeiroB/Ampara/tree/developer)) sobe em `http://localhost:5080`
+(`docker compose up -d --build`; veja o README dele). Com a API no ar, o `VITE_API_URL` do `.env` deve apontar para ela e o
+`VITE_TENANT=demo` identifica a funerária de demonstração (cabeçalho `X-Tenant`). Em produção o slug vem do subdomínio.
+
+- **Client:** `packages/api-client` é gerado com Orval a partir do `openapi.json`. Para atualizar, copie o novo
+  `artifacts/openapi/openapi.json` do backend (`dotnet build src/Funeraria.Api -p:OpenApiGenerateDocumentsOnBuild=true`)
+  e rode `pnpm --filter @ampara/api-client generate`.
+- **Transporte:** `packages/api-client/src/http.ts` envia `X-Tenant` e o `Bearer`, renova o access token em caso de 401
+  (uma vez, sem requisições paralelas) e lança `ApiError` com `code`, `traceId` e `errors` por campo.
+- **Sessão:** access token (15 min) só em memória; o refresh token fica em cookie httpOnly. `features/auth` restaura a
+  sessão ao abrir o app e expõe `useAuth()` (`login`, `logout`, `user`, `status`).
+- **CORS:** o backend em Development já libera `http://localhost:5173` com credenciais.
 
 ## Organização do `apps/web`
 

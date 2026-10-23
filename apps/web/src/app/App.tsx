@@ -1,3 +1,10 @@
+import { DesignPreview } from './DesignPreview';
+import { AppProviders } from './providers/AppProviders';
+
 export function App() {
-  return <h1>Ampara</h1>;
+  return (
+    <AppProviders>
+      <DesignPreview />
+    </AppProviders>
+  );
 }
