@@ -1,10 +1,11 @@
-import { DesignPreview } from './DesignPreview';
+import { RouterProvider } from 'react-router';
 import { AppProviders } from './providers/AppProviders';
+import { router } from './routes/router';
 
 export function App() {
   return (
     <AppProviders>
-      <DesignPreview />
+      <RouterProvider router={router} />
     </AppProviders>
   );
 }

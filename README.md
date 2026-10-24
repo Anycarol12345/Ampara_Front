@@ -36,15 +36,15 @@ No PowerShell, troque `cp` por `Copy-Item`.
 
 ## Comandos
 
-| Comando             | O que faz                                      |
-| ------------------- | ---------------------------------------------- |
-| `pnpm dev`          | Sobe todos os apps em modo desenvolvimento     |
-| `pnpm build`        | Build de todos os pacotes e apps               |
-| `pnpm lint`         | ESLint, incluindo as regras de dependência     |
-| `pnpm typecheck`    | Checagem de tipos (TypeScript strict)          |
-| `pnpm test`         | Testes                                         |
-| `pnpm format`       | Formata o código com Prettier                  |
-| `pnpm format:check` | Verifica a formatação sem alterar arquivos     |
+| Comando             | O que faz                                  |
+| ------------------- | ------------------------------------------ |
+| `pnpm dev`          | Sobe todos os apps em modo desenvolvimento |
+| `pnpm build`        | Build de todos os pacotes e apps           |
+| `pnpm lint`         | ESLint, incluindo as regras de dependência |
+| `pnpm typecheck`    | Checagem de tipos (TypeScript strict)      |
+| `pnpm test`         | Testes                                     |
+| `pnpm format`       | Formata o código com Prettier              |
+| `pnpm format:check` | Verifica a formatação sem alterar arquivos |
 
 Para rodar um app isolado:
 
@@ -55,10 +55,10 @@ pnpm --filter @ampara/landing dev
 
 ## Variáveis de ambiente
 
-| App       | Arquivo local | Variáveis                                      |
-| --------- | ------------- | ---------------------------------------------- |
-| `web`     | `.env`        | `VITE_API_URL`, `VITE_TENANT` (slug em dev)    |
-| `landing` | `.env.local`  | `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_APP_URL`   |
+| App       | Arquivo local | Variáveis                                    |
+| --------- | ------------- | -------------------------------------------- |
+| `web`     | `.env`        | `VITE_API_URL`, `VITE_TENANT` (slug em dev)  |
+| `landing` | `.env.local`  | `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_APP_URL` |
 
 - Os arquivos `.env.example` são versionados; os `.env` reais não.
 - Tudo que começa com `VITE_` ou `NEXT_PUBLIC_` vai para o navegador. **Nunca coloque segredos aí.**
@@ -107,8 +107,8 @@ O alias `@/` aponta para `apps/web/src/`.
 Exemplo:
 
 ```ts
-import { LoginPage } from '@/features/auth';               // correto
-import { useAuth } from '@/features/auth/hooks/useAuth';   // erro de lint
+import { LoginPage } from '@/features/auth'; // correto
+import { useAuth } from '@/features/auth/hooks/useAuth'; // erro de lint
 ```
 
 As regras são verificadas pelo ESLint (`no-restricted-imports`), configuradas em
