@@ -1,0 +1,33 @@
+name: API client
+
+on:
+  pull_request:
+    paths:
+      - 'packages/api-client/**'
+      - '.github/workflows/api-client.yml'
+  push:
+    branches: [develop, main]
+    paths:
+      - 'packages/api-client/**'
+      - '.github/workflows/api-client.yml'
+
+jobs:
+  check-generated:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Regenera o client a partir do openapi.json versionado
+        run: pnpm --filter @ampara/api-client generate
+      - name: Falha se o client versionado estiver desatualizado
+        run: |
+          if [ -n "$(git status --porcelain -- packages/api-client)" ]; then
+            echo "::error::O client gerado está desatualizado. Rode 'pnpm api:generate' e comite o resultado."
+            git status --short -- packages/api-client
+            exit 1
+          fi

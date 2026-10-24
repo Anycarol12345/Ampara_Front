@@ -21,7 +21,10 @@ export function configureApiClient(next: ApiClientConfig): void {
   config = next;
 }
 
-/** Erro de resposta não-2xx, no formato ProblemDetails do backend (code, trace_id, errors por campo). */
+/**
+ * Erro único do client: respostas não-2xx no formato ProblemDetails do backend
+ * (code, trace_id, errors por campo) e falhas de rede (status 0).
+ */
 export class ApiError extends Error {
   readonly status: number;
   readonly code: string | undefined;
@@ -41,6 +44,15 @@ export class ApiError extends Error {
         ? (problem.errors as Record<string, string[]>)
         : {};
   }
+
+  /** Falha de conexão: a requisição não chegou a receber resposta. */
+  get isNetworkError(): boolean {
+    return this.status === 0;
+  }
+}
+
+export function isApiError(error: unknown): error is ApiError {
+  return error instanceof ApiError;
 }
 
 const AUTH_ROUTES = ['/auth/login', '/auth/refresh', '/auth/logout'];
@@ -55,7 +67,12 @@ function refreshOnce(cfg: ApiClientConfig): Promise<string | null> {
   return refreshing;
 }
 
-function send(cfg: ApiClientConfig, url: string, options: RequestInit, token: string | null) {
+function send(
+  cfg: ApiClientConfig,
+  url: string,
+  options: RequestInit,
+  token: string | null,
+): Promise<Response> {
   const headers = new Headers(options.headers);
   headers.set('Accept', 'application/json');
   const tenant = cfg.getTenant();
@@ -64,6 +81,24 @@ function send(cfg: ApiClientConfig, url: string, options: RequestInit, token: st
 
   // credentials: o refresh token trafega em cookie httpOnly entre a SPA e a API.
   return fetch(`${cfg.baseUrl}${url}`, { ...options, headers, credentials: 'include' });
+}
+
+async function sendSafely(
+  cfg: ApiClientConfig,
+  url: string,
+  options: RequestInit,
+  token: string | null,
+): Promise<Response> {
+  try {
+    return await send(cfg, url, options, token);
+  } catch (cause) {
+    // Cancelamento pedido pelo chamador (ex.: TanStack Query) não é erro de rede.
+    if (cause instanceof DOMException && cause.name === 'AbortError') throw cause;
+    throw new ApiError(0, {
+      title: 'Não foi possível conectar ao servidor.',
+      code: 'network_error',
+    });
+  }
 }
 
 async function parseBody(res: Response): Promise<unknown> {
@@ -84,12 +119,17 @@ export async function customFetch<T>(url: string, options: RequestInit = {}): Pr
   const cfg = config;
   const isAuthRoute = AUTH_ROUTES.some((route) => url.includes(route));
 
-  let res = await send(cfg, url, options, cfg.getAccessToken());
+  const sentToken = cfg.getAccessToken();
+  let res = await sendSafely(cfg, url, options, sentToken);
 
   if (res.status === 401 && !isAuthRoute) {
-    const token = await refreshOnce(cfg);
+    // Se outra requisição já renovou o token enquanto esta estava em voo, reaproveita-o.
+    const current = cfg.getAccessToken();
+    const token = current && current !== sentToken ? current : await refreshOnce(cfg);
+
     if (token) {
-      res = await send(cfg, url, options, token);
+      res = await sendSafely(cfg, url, options, token);
+      if (res.status === 401) cfg.onSessionExpired?.();
     } else {
       cfg.onSessionExpired?.();
     }

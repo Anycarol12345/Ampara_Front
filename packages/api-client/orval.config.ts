@@ -1,7 +1,7 @@
 import { defineConfig } from 'orval';
 
-// Gera o client a partir de openapi.json (contrato do backend, INF-21).
-// Para atualizar: copie o novo openapi.json do backend e rode `pnpm --filter @ampara/api-client generate`.
+/// Gera o client a partir de openapi.json (contrato do backend, INF-21).
+// Para atualizar o backend: edite a versão em backend-version.json e rode `pnpm api:generate`.
 export default defineConfig({
   ampara: {
     input: './openapi.json',
