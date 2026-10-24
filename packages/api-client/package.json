@@ -10,10 +10,10 @@
   },
   "scripts": {
     "api:fetch": "node scripts/fetch-openapi.mjs",
-  "api:generate": "node scripts/fetch-openapi.mjs && orval",
-  "generate": "orval",
-  "lint": "eslint .",
-  "typecheck": "tsc --noEmit -p tsconfig.json"
+    "api:generate": "node scripts/fetch-openapi.mjs && orval",
+    "generate": "orval",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "devDependencies": {
     "@ampara/config": "workspace:*",
