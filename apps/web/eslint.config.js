@@ -28,4 +28,17 @@ export default [
       ],
     },
   },
+  {
+    // Testes podem inspecionar o storage para provar que nenhum token foi gravado.
+    files: ['src/**/*.test.{ts,tsx}'],
+    rules: {
+      'no-restricted-globals': 'off',
+      'no-restricted-properties': 'off',
+    },
+  },
+  {
+    // Código gerado pelo shadcn e helpers de teste exportam mais que componentes.
+    files: ['src/shared/ui/**/*.{ts,tsx}', 'src/test/**/*.{ts,tsx}'],
+    rules: { 'react-refresh/only-export-components': 'off' },
+  },
 ];
