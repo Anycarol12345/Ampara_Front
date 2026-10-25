@@ -1,0 +1,31 @@
+name: ampara
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    image: ampara-web:local
+    ports:
+      - '${WEB_PORT:-8081}:8080'
+    environment:
+      # URL que o NAVEGADOR usa para chamar a API (não é o nome do serviço do Docker).
+      API_URL: ${API_URL:-http://localhost:5080}
+      # Opcional: força a funerária (equivale ao subdomínio). Vazio = detecta pelo endereço.
+      TENANT: ${TENANT:-}
+    restart: unless-stopped
+
+  # PROVISÓRIO: depende do INF-15 (nome da imagem, porta, variáveis e banco de dados).
+  # Só sobe com: docker compose --profile api up
+  api:
+    profiles: [api]
+    image: ${API_IMAGE:-ghcr.io/org/ampara-api}:${API_TAG:-latest}
+    ports:
+      - '${API_PORT:-5080}:8080'
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
+      # TODO (INF-15): connection string, chave do JWT e origens do CORS.
+      # O CORS precisa liberar a origem do frontend (http://localhost:${WEB_PORT}) com credenciais,
+      # por causa do cookie de refresh.
+    restart: unless-stopped
+    # TODO (INF-15): serviço do banco de dados e depends_on, se a API precisar de um.

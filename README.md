@@ -121,3 +121,14 @@ adicione o nome na lista `FEATURES` do `boundaries.js`.
 - TypeScript em modo estrito.
 - Prettier para formatação, ESLint para qualidade e dependências.
 - Commits no formato Conventional Commits (`feat:`, `fix:`, `chore:`).
+
+## Docker
+
+```bash
+cp .env.example .env
+docker compose up --build        # frontend em http://localhost:8081
+docker compose --profile api up  # inclui a API (veja INF-15)
+```
+
+A URL da API é lida em tempo de execução (`API_URL`), então a mesma imagem serve a qualquer
+ambiente sem novo build: `docker run -p 8081:8080 -e API_URL=https://api.exemplo.com.br ampara-web`.
