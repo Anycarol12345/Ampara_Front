@@ -1,0 +1,194 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  TURBO_TELEMETRY_DISABLED: '1'
+  # Em pull request só roda o que mudou em relação à base; em push roda tudo
+  # (o cache do Turborepo evita refazer o que já foi feito).
+  AFFECTED: ${{ github.event_name == 'pull_request' && '--affected' || '' }}
+
+jobs:
+  quality:
+    name: Qualidade
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # o --affected precisa do histórico para achar o ponto de partida do PR
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Cache do Turborepo
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: turbo-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            turbo-${{ runner.os }}-
+
+      - name: Formatação
+        run: pnpm format:check
+      - name: Lint
+        run: pnpm turbo run lint $AFFECTED
+      - name: Checagem de tipos
+        run: pnpm turbo run typecheck $AFFECTED
+      - name: Testes (Vitest, com cobertura)
+        run: pnpm turbo run test:coverage $AFFECTED
+      - name: Build
+        run: pnpm turbo run build $AFFECTED
+
+      - name: Relatório de cobertura
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-web
+          path: apps/web/coverage
+          if-no-files-found: ignore
+          retention-days: 7
+
+  api-client:
+    name: Client da API
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      # PROVISÓRIO: confere o código gerado a partir do openapi.json que está no repositório.
+      # Quando a release v0.1.0 do backend existir e o segredo BACKEND_TOKEN estiver criado,
+      # troque este passo por:  run: pnpm api:generate   (com env: BACKEND_TOKEN: ${{ secrets.BACKEND_TOKEN }})
+      - name: Regenera o client
+        run: pnpm --filter @ampara/api-client generate
+
+      - name: Falha se o client versionado estiver desatualizado
+        run: |
+          if [ -n "$(git status --porcelain -- packages/api-client)" ]; then
+            echo "::error::O client gerado está desatualizado. Rode 'pnpm api:generate' e comite o resultado."
+            git status --short -- packages/api-client
+            exit 1
+          fi
+
+  docker:
+    name: Imagem Docker (web)
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verifica se o web foi afetado
+        id: changes
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          if [ "$EVENT" != "pull_request" ]; then
+            echo "web=true" >> "$GITHUB_OUTPUT"
+          elif git diff --name-only "origin/$BASE_REF...HEAD" | grep -E '^(apps/web/|packages/(api-client|config)/|package\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|\.npmrc|\.dockerignore)' > /dev/null; then
+            echo "web=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "web=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Nome da imagem (minúsculas)
+        id: image
+        run: echo "name=ghcr.io/${GITHUB_REPOSITORY,,}-web" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+        if: steps.changes.outputs.web == 'true'
+
+      - name: Build da imagem
+        if: steps.changes.outputs.web == 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          load: true
+          tags: ampara-web:ci
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,scope=web,mode=max
+
+      - name: Teste rápido da imagem
+        if: steps.changes.outputs.web == 'true'
+        run: |
+          docker run -d --name web -p 8080:8080 -e API_URL=http://api.exemplo.test ampara-web:ci
+          for i in $(seq 1 20); do
+            curl -fsS http://localhost:8080/healthz > /dev/null 2>&1 && break
+            sleep 1
+          done
+          curl -fsS http://localhost:8080/healthz
+          curl -fsS http://localhost:8080/config.js -o config.js
+          grep -F 'http://api.exemplo.test' config.js
+          curl -fsS http://localhost:8080/login -o login.html
+          grep -F 'id="root"' login.html
+
+      - name: Logs e limpeza do container
+        if: ${{ !cancelled() && steps.changes.outputs.web == 'true' }}
+        run: |
+          docker logs web || true
+          docker rm -f web || true
+
+      - name: Login no GitHub Container Registry
+        if: github.event_name == 'push' && steps.changes.outputs.web == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Tags da imagem
+        id: meta
+        if: github.event_name == 'push' && steps.changes.outputs.web == 'true'
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.image.outputs.name }}
+          tags: |
+            type=ref,event=branch
+            type=sha,format=short
+
+      - name: Publicar imagem
+        if: github.event_name == 'push' && steps.changes.outputs.web == 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=web
+
+  # Playwright (FE-TST-01): ativar quando o pacote de e2e existir.
+  # e2e:
+  #   name: Playwright
+  #   needs: docker
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     # subir a imagem do web + a imagem da API (INF-15) com docker compose
+  #     # rodar `pnpm --filter @ampara/e2e test` e anexar o relatório como artefato

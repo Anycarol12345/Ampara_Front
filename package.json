@@ -16,7 +16,8 @@
     "typecheck": "turbo run typecheck",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "api:generate": "pnpm --filter @ampara/api-client api:generate"
+    "api:generate": "pnpm --filter @ampara/api-client api:generate",
+    "test:coverage": "turbo run test:coverage"
   },
   "devDependencies": {
     "@ampara/config": "workspace:*",
