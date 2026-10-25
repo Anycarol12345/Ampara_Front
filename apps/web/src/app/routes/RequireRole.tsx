@@ -1,8 +1,7 @@
 import { Navigate, Outlet, useLocation } from 'react-router';
-import { useAuth } from '@/features/auth';
 import { ForbiddenPage } from '@/app/pages/ForbiddenPage';
+import { hasRole, useAuth } from '@/features/auth';
 import { PATHS } from './paths';
-import { hasRole } from './roles';
 
 /**
  * Protege um grupo de rotas. Só controla a interface: a segurança real é do backend.

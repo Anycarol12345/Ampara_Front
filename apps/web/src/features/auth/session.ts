@@ -38,32 +38,42 @@ export async function signIn(email: string, senha: string): Promise<UsuarioSessa
 export async function signOut(): Promise<void> {
   try {
     await logout();
+  } catch {
+    // Sem conexão ou sessão já expirada: encerra localmente do mesmo jeito.
   } finally {
     setSession(null);
   }
 }
 
+const REFRESH_LOCK = 'ampara:refresh-session';
 let refreshing: Promise<string | null> | null = null;
+
+async function requestNewSession(): Promise<string | null> {
+  try {
+    const res = await renovarSessao();
+    if (res.status !== 200) return null;
+    setSession(res.data);
+    return res.data.access_token;
+  } catch {
+    setSession(null);
+    return null;
+  }
+}
 
 /**
  * Troca o refresh token (cookie) por um access token novo.
- * Uma única chamada por vez: o backend rotaciona o refresh token a cada uso, e reaproveitar
- * um token já trocado derruba todas as sessões do usuário.
+ * O backend rotaciona o refresh token a cada uso e revoga todas as sessões se um token
+ * já usado for reapresentado (AUT-03). Por isso:
+ * - uma única chamada por vez nesta aba (`refreshing`);
+ * - uma única chamada por vez entre abas (Web Locks): a segunda aba espera a primeira
+ *   terminar e então usa o cookie já rotacionado, que o navegador compartilha.
  */
 export function refreshSession(): Promise<string | null> {
-  refreshing ??= (async () => {
-    try {
-      const res = await renovarSessao();
-      if (res.status !== 200) return null;
-      setSession(res.data);
-      return res.data.access_token;
-    } catch {
-      setSession(null);
-      return null;
-    } finally {
-      refreshing = null;
-    }
-  })();
+  refreshing ??= (
+    navigator.locks ? navigator.locks.request(REFRESH_LOCK, requestNewSession) : requestNewSession()
+  ).finally(() => {
+    refreshing = null;
+  });
   return refreshing;
 }
 
