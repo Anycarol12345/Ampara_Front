@@ -3,6 +3,7 @@ import { AuthProvider } from '@/features/auth';
 import { ThemeProvider } from '@/shared/theme';
 import { Toaster } from '@/shared/ui/sonner';
 import { QueryAuthSync, QueryProvider } from './query';
+import { RealtimeProvider } from './realtime';
 import { TenantProvider } from './tenant';
 
 export function AppProviders({ children }: { children: ReactNode }) {
@@ -12,8 +13,10 @@ export function AppProviders({ children }: { children: ReactNode }) {
         <QueryProvider>
           <AuthProvider>
             <QueryAuthSync />
-            {children}
-            <Toaster richColors closeButton />
+            <RealtimeProvider>
+              {children}
+              <Toaster richColors closeButton />
+            </RealtimeProvider>
           </AuthProvider>
         </QueryProvider>
       </TenantProvider>

@@ -93,6 +93,12 @@ export const router = createBrowserRouter([
       Component: (await import('@/app/FormExample')).FormExample,
     }),
   },
+  {
+    path: PATHS.designRealtime,
+    lazy: async () => ({
+      Component: (await import('@/app/RealtimeExample')).RealtimeExample,
+    }),
+  },
   { path: PATHS.forbidden, element: <ForbiddenPage /> },
   { path: '*', element: <NotFoundPage /> },
 ]);

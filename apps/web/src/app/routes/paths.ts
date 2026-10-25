@@ -7,4 +7,5 @@ export const PATHS = {
   cliente: '/minha-conta',
   interna: '/painel',
   plataforma: '/plataforma',
+  designRealtime: '/design/realtime',
 } as const;

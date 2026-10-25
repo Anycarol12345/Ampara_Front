@@ -3,6 +3,7 @@ import { useAuth } from '@/features/auth';
 import { ThemeToggle } from '@/shared/theme';
 import { Button } from '@/shared/ui/button';
 import { TenantLogo } from '@/app/providers/tenant';
+import { ConnectionIndicator } from '@/shared/realtime';
 
 export function AreaShell({ title }: { title: string }) {
   const { user, logout } = useAuth();
@@ -16,6 +17,7 @@ export function AreaShell({ title }: { title: string }) {
             <span className="text-sm text-muted-foreground">{title}</span>
           </div>
           <div className="flex items-center gap-3">
+            <ConnectionIndicator />
             <span className="text-sm">{user?.nome}</span>
             <ThemeToggle />
             <Button variant="outline" onClick={() => void logout()}>
