@@ -80,10 +80,18 @@ export const router = createBrowserRouter([
       },
     ],
   },
+  // Prévia do design system (temporária, remover quando houver telas reais)
   {
-    // Prévia do design system (temporária, remover quando houver telas reais)
     path: PATHS.design,
-    lazy: async () => ({ Component: (await import('@/app/DesignPreview')).DesignPreview }),
+    lazy: async () => ({
+      Component: (await import('@/app/DesignPreview')).DesignPreview,
+    }),
+  },
+  {
+    path: PATHS.designForm,
+    lazy: async () => ({
+      Component: (await import('@/app/FormExample')).FormExample,
+    }),
   },
   { path: PATHS.forbidden, element: <ForbiddenPage /> },
   { path: '*', element: <NotFoundPage /> },
